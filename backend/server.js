@@ -7,6 +7,8 @@ const morgan = require("morgan");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 
+const response = require("../backend/middleware/response");
+
 const app = express();
 
 // helmet is a security middleware for express
@@ -28,12 +30,23 @@ app.use(
 );
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(response);
+
+const PORT = process.env.PORT || 8000;
+
+// Mongodb connection
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("Connected to MongoDB");
+  })
+  .catch((error) => {
+    console.error("Error connecting to MongoDB:", error);
+  });
 
 app.get("/health", (req, res) => {
   res.ok({ time: Date.now().toLocaleString() }, "OK");
 });
-
-const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
