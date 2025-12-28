@@ -31,6 +31,7 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(response);
+app.use("/api/auth", require("./routes/auth"));
 
 const PORT = process.env.PORT || 8000;
 
