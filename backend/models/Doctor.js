@@ -105,3 +105,5 @@ const doctorSchema = new mongoose.Schema({
     default: false,
   },
 });
+
+module.exports = mongoose.model("Doctor", doctorSchema);

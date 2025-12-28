@@ -4,6 +4,8 @@ const Doctor = require("../models/Doctor");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Patient = require("../models/Patient");
+const { body } = require("express-validator");
+const passport = require("passport");
 
 const router = express.Router();
 
@@ -14,7 +16,7 @@ const signToken = (id, type) => {
 router.post(
   "/doctor/register",
   [
-    body("name").noEmpty(),
+    body("name").notEmpty(),
     body("email").isEmail(),
     body("password").isLength({ min: 6 }),
   ],
@@ -29,7 +31,6 @@ router.post(
       const doctor = await Doctor.create({
         ...req.body,
         password: hashed,
-        isVerified: true,
       });
 
       const token = signToken(doctor._id, "doctor");
@@ -73,7 +74,7 @@ router.post(
 router.post(
   "/patient/register",
   [
-    body("name").noEmpty(),
+    body("name").notEmpty(),
     body("email").isEmail(),
     body("password").isLength({ min: 6 }),
   ],
@@ -88,7 +89,6 @@ router.post(
       const patient = await Patient.create({
         ...req.body,
         password: hashed,
-        isVerified: true,
       });
 
       const token = signToken(patient._id, "patient");
@@ -141,7 +141,7 @@ router.get("/google", (req, res, next) => {
 });
 
 router.get(
-  "/google/callback",
+  "/callback/google",
   passport.authenticate("google", {
     session: false,
     failureRedirect: "/auth/failure",

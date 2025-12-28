@@ -6,8 +6,9 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-
 const response = require("../backend/middleware/response");
+require("./config/passport");
+const passportLib = require("passport");
 
 const app = express();
 
@@ -31,7 +32,10 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(response);
+app.use(passportLib.initialize());
 app.use("/api/auth", require("./routes/auth"));
+app.use("/api/doctor", require("./routes/doctor"));
+app.use("/api/patient", require("./routes/patient"));
 
 const PORT = process.env.PORT || 8000;
 
