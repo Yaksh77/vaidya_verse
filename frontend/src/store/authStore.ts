@@ -5,7 +5,7 @@ import {
   putWithAuth,
 } from "@/service/httpService";
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 interface AuthState {
   user: User | null;
@@ -13,17 +13,17 @@ interface AuthState {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  hasHydrated: boolean;
 
-  //    Actions
   setUser: (user: User, token: string) => void;
   clearError: () => void;
   logout: () => void;
+  setHasHydrated: (state: any) => void;
 
-  //   Api actions
   loginDoctor: (email: string, password: string) => Promise<void>;
   loginPatient: (email: string, password: string) => Promise<void>;
-  registerDoctor: (date: any) => Promise<void>;
-  registerPatient: (date: any) => Promise<void>;
+  registerDoctor: (data: any) => Promise<void>;
+  registerPatient: (data: any) => Promise<void>;
   fetchProfile: () => Promise<User | null>;
   updateProfile: (data: any) => Promise<void>;
 }
@@ -36,6 +36,9 @@ export const userAuthStore = create<AuthState>()(
       loading: false,
       error: null,
       isAuthenticated: false,
+      hasHydrated: false,
+
+      setHasHydrated: (state) => set({ hasHydrated: state }),
 
       setUser: (user, token) => {
         set({
@@ -59,13 +62,13 @@ export const userAuthStore = create<AuthState>()(
       loginDoctor: async (email, password) => {
         set({ loading: true, error: null });
         try {
-          const response = await postWithoutAuth("/auth/doctor/login", {
+          const response = await postWithoutAuth("auth/doctor/login", {
             email,
             password,
           });
           get().setUser(response.data.user, response.data.token);
-        } catch (error: any) {
-          set({ error: error.message });
+        } catch (err: any) {
+          set({ error: err.message });
         } finally {
           set({ loading: false });
         }
@@ -74,13 +77,13 @@ export const userAuthStore = create<AuthState>()(
       loginPatient: async (email, password) => {
         set({ loading: true, error: null });
         try {
-          const response = await postWithoutAuth("/auth/patient/login", {
+          const response = await postWithoutAuth("auth/patient/login", {
             email,
             password,
           });
           get().setUser(response.data.user, response.data.token);
-        } catch (error: any) {
-          set({ error: error.message });
+        } catch (err: any) {
+          set({ error: err.message });
         } finally {
           set({ loading: false });
         }
@@ -89,12 +92,10 @@ export const userAuthStore = create<AuthState>()(
       registerDoctor: async (data) => {
         set({ loading: true, error: null });
         try {
-          const response = await postWithoutAuth("/auth/doctor/register", {
-            data,
-          });
+          const response = await postWithoutAuth("auth/doctor/register", data);
           get().setUser(response.data.user, response.data.token);
-        } catch (error: any) {
-          set({ error: error.message });
+        } catch (err: any) {
+          set({ error: err.message });
         } finally {
           set({ loading: false });
         }
@@ -103,63 +104,60 @@ export const userAuthStore = create<AuthState>()(
       registerPatient: async (data) => {
         set({ loading: true, error: null });
         try {
-          const response = await postWithoutAuth("/auth/patient/register", {
-            data,
-          });
+          const response = await postWithoutAuth("auth/patient/register", data);
           get().setUser(response.data.user, response.data.token);
-        } catch (error: any) {
-          set({ error: error.message });
+        } catch (err: any) {
+          set({ error: err.message });
         } finally {
           set({ loading: false });
         }
       },
 
-      fetchProfile: async (): Promise<User | null> => {
-        set({ loading: true, error: null });
+      fetchProfile: async () => {
         try {
           const { user } = get();
-          if (!user) {
-            throw new Error("User not found");
-          }
-          const endPoint =
+          if (!user) return null;
+
+          const endpoint =
             user.type === "doctor" ? "/doctor/me" : "/patient/me";
-          const response = await getWithAuth(endPoint);
-          set({ user: { ...user, ...response.data }, loading: false });
+
+          const response = await getWithAuth(endpoint);
+          set({ user: { ...user, ...response.data } });
+
           return response.data;
-        } catch (error: any) {
-          set({ error: error.message });
+        } catch (err: any) {
+          set({ error: err.message });
           return null;
-        } finally {
-          set({ loading: false });
         }
       },
 
       updateProfile: async (data) => {
-        set({ loading: true, error: null });
         try {
           const { user } = get();
-          if (!user) {
-            throw new Error("User not found");
-          }
-          const endPoint =
+          if (!user) throw new Error("User not found");
+
+          const endpoint =
             user.type === "doctor" ? "/doctor/me" : "/patient/me";
-          const response = await putWithAuth(endPoint, data);
-          set({ user: { ...user, ...response.data }, loading: false });
-        } catch (error: any) {
-          set({ error: error.message });
-          throw error;
-        } finally {
-          set({ loading: false });
+
+          const response = await putWithAuth(endpoint, data);
+          set({ user: { ...user, ...response.data } });
+        } catch (err: any) {
+          set({ error: err.message });
+          throw err;
         }
       },
     }),
     {
       name: "auth-storage",
+      storage: createJSONStorage(() => localStorage), // ✅ browser-only
       partialize: (state) => ({
         user: state.user,
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true); // ✅ IMPORTANT
+      },
     }
   )
 );

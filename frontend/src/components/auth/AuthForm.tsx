@@ -17,22 +17,29 @@ interface AuthFormProps {
 }
 
 function AuthForm({ type, userRole }: AuthFormProps) {
-  const [formData, setFormData] = React.useState({
+  const router = useRouter();
+  const registerDoctor = userAuthStore((state) => state.registerDoctor);
+  const registerPatient = userAuthStore((state) => state.registerPatient);
+  const loginDoctor = userAuthStore((state) => state.loginDoctor);
+  const loginPatient = userAuthStore((state) => state.loginPatient);
+
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { registerDoctor, registerPatient, loginPatient, loginDoctor } =
-    userAuthStore();
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (type === "signup" && !agreeTerms) return;
+    setLoading(true);
+    setError(null);
+
     try {
       if (type === "signup") {
         if (userRole === "doctor") {
@@ -61,6 +68,8 @@ function AuthForm({ type, userRole }: AuthFormProps) {
     } catch (error) {
       setError((error as Error).message);
       console.error(`${type} failed`, error);
+    } finally {
+      setLoading(false);
     }
   };
 

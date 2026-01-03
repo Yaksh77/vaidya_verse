@@ -9,9 +9,8 @@ const passport = require("passport");
 
 const router = express.Router();
 
-const signToken = (id, type) => {
+const signToken = (id, type) =>
   jwt.sign({ id, type }, process.env.JWT_SECRET, { expiresIn: "7d" });
-};
 
 router.post(
   "/doctor/register",
@@ -97,6 +96,8 @@ router.post(
         "Patient registered successfully"
       );
     } catch (error) {
+      console.log(error);
+
       res.serverError("Patient registration failed", [error.message]);
     }
   }

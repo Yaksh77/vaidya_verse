@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { computeAgeFromDob } = require("../utils/date");
 
 const emergencyContactSchema = new mongoose.Schema(
   {
@@ -88,11 +89,10 @@ const patientSchema = new mongoose.Schema(
   }
 );
 
-patientSchema.pre("save", function (next) {
+patientSchema.pre("save", async function () {
   if (this.dob && this.isModified("dob")) {
     this.age = computeAgeFromDob(this.dob);
   }
-  next();
 });
 
 module.exports = mongoose.model("Patient", patientSchema);
